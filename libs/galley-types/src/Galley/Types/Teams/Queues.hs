@@ -7,8 +7,7 @@
 {-# LANGUAGE TemplateHaskell            #-}
 
 module Galley.Types.Teams.Queues
-    ( QEvent
-    , newQEvent
+    ( QEvent (..)
     , qEventType
     , qEventTime
     , qEventTeam
@@ -17,7 +16,7 @@ module Galley.Types.Teams.Queues
     , QEventType (..)
     , QEventData (..)
 
-    , QTeamData
+    , QTeamData (..)
     , memberCount
     , billingEmail
 
@@ -63,9 +62,6 @@ data QTeamData = QTeamData
 makeLenses ''QEvent
 makeLenses ''QTeamData
 
-newQEvent :: QEventType -> TeamId -> UTCTime -> QEvent
-newQEvent typ tid tme = QEvent typ tid tme Nothing
-
 instance ToJSON QEventType where
     toJSON QTeamCreate   = String "team.create"
     toJSON QTeamUpdate   = String "team.update"
@@ -110,7 +106,8 @@ parseEventData t (Just _) = fail $ "unexpected event data for type " <> show t
 
 instance ToJSON QTeamData where
     toJSON u = object
-        $ "member_count" .= _memberCount u
+        $ "member_count"  .= _memberCount u
+        # "billing_email" .= _billingEmail u
         # []
 
 instance FromJSON QTeamData where

@@ -14,6 +14,8 @@ module Galley.Options
     , keyspace
     , serverPort
     , httpPoolSz
+    , queueName
+    , awsRegion
     , parseOptions
     ) where
 
@@ -25,7 +27,11 @@ import Data.Text (Text)
 import Data.Word
 import Data.Misc
 import Data.Monoid
+import Network.AWS (Region (..))
+import Network.AWS.Data
+import Data.String
 import Options.Applicative
+import Options.Applicative.Types
 
 import qualified Data.Text as Text
 
@@ -41,6 +47,8 @@ data Opts = Opts
     , _gundeckPort :: !Port
     , _discoUrl    :: !(Maybe String)
     , _httpPoolSz  :: !Int
+    , _queueName   :: !Text
+    , _awsRegion   :: !Region
     }
 
 makeLenses ''Opts
@@ -112,9 +120,21 @@ parseOptions = execParser (info (helper <*> optsParser) desc)
                 <> help "number of connections for the http pool"
                 <> value 128)
 
+        <*> (textOption $
+                long "team-events-queue-name"
+                <> metavar "STRING"
+                <> help "sqs queue name to send team events")
+
+        <*> (option region $
+                long "aws-region"
+                <> metavar "STRING"
+                <> help "aws region name")
+
     bytesOption :: Mod OptionFields String -> Parser ByteString
     bytesOption = fmap pack . strOption
 
     textOption :: Mod OptionFields String -> Parser Text
     textOption = fmap Text.pack . strOption
 
+    region :: ReadM Region
+    region = readerAsk >>= either readerError return . fromText . fromString
